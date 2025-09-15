@@ -14,11 +14,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Build the Docker image
+      - name: Build Docker image
         run: docker build -t juice-shop:${{ github.sha }} .
 
       - name: Syft SBOM Scan
-        uses: anchore/sbom-action@v8
+        uses: anchore/sbom-action@v0
         with:
           image: "juice-shop:${{ github.sha}}"
           output-file: "sbom.spdx.json"
