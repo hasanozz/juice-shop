@@ -15,17 +15,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag juice-shop:${{ github.sha }}
+        run: docker build . -f Dockerfile -t juice-shop:${{ github.sha }}
 
-      # Syft ile SBOM üret (CycloneDX JSON)
-      - name: Run Syft on image
+      # --- Syft kurulumu ---
+      - name: Install Syft
         uses: anchore/syft-action@v0
-        with:
-          image: juice-shop:${{ github.sha }}
-          format: cyclonedx-json
-          output-file: sbom.cdx.json
 
-      - name: Upload SBOM as artifact
+      # --- SBOM üret (CycloneDX JSON formatında) ---
+      - name: Generate SBOM with Syft
+        run: syft docker:juice-shop:${{ github.sha }} -o cyclonedx-json > sbom.cdx.json
+
+      # --- SBOM’u artifact olarak yükle ---
+      - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbom
