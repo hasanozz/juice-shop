@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-syft:
-    name: BUULD & SBOM
+    name: Build & SBOM
     runs-on: ubuntu-latest
 
     steps:
