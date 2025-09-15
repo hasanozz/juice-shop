@@ -2,9 +2,10 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master" ]        # <-- master
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master" ]        # <-- master
+  workflow_dispatch:              
 
 jobs:
   build:
@@ -16,7 +17,7 @@ jobs:
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag juice-shop:${{ github.sha }}
 
-      # --- Syft ile SBOM üret ---
+      # Syft ile SBOM üret (CycloneDX JSON)
       - name: Run Syft on image
         uses: anchore/syft-action@v0
         with:
