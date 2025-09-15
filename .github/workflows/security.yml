@@ -1,41 +1,62 @@
-name: Docker Image CI
+name: Build + SBOM + Semgrep
 
 on:
   push:
-    branches: [ "master" ]        # <-- master
+    branches: [ "master" ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
-  build-and-syft:
-    name: Build & SBOM
+  build-and-secscan:
+    name: Build & SBOM & Semgrep
     runs-on: ubuntu-latest
+
+    # SARIF yüklemek ve checkout için gerekli izinler
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         run: docker build -t juice-shop:${{ github.sha }} .
 
-      - name: Syft SBOM Scan
+      # --- Syft / SBOM ---
+      - name: Syft SBOM (Anchore Action)
         uses: anchore/sbom-action@v0
         with:
-          image: "juice-shop:${{ github.sha}}"
-          output-file: "sbom.spdx.json"
-          format: "spdx-json"
+          image: juice-shop:${{ github.sha }}
+          format: spdx-json
+          output-file: sbom.spdx.json
 
-      - name: Semgrep Scan
-        run: mkdir -p semgrep/results semgrep ci --config=auto --sarif --output=semgrep/results/semgrep.sarif || true
-
-      - name: Upload SARIF File
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'semgrep/results/semgrep.sarif'
-
-      - name: Upload Semgrep report
+      - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+      # --- Semgrep ---
+      # Action semgrep'i kurar ve çalıştırır, SARIF üretir
+      - name: Semgrep Scan
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: auto
+          generateSarif: true
+        # Semgrep Cloud App'e göndermek istersen:
+        # env:
+        #   SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Upload Semgrep SARIF to Code Scanning
         if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+      - name: Upload Semgrep raw results (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: semgrep-results
-          path: semgrep/results/
+          path: semgrep.sarif
