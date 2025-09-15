@@ -24,5 +24,18 @@ jobs:
           output-file: "sbom.spdx.json"
           format: "spdx-json"
 
-      - name: semgrep-action
-        uses: semgrep/semgrep-action@v1
+      - name: Semgrep Scan
+        run: mkdir -p semgrep/results semgrep ci --config=auto --sarif --output=semgrep/results/semgrep.sarif || true
+
+      - name: Upload SARIF File
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'semgrep/results/semgrep.sarif'
+
+      - name: Upload Semgrep report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-results
+          path: semgrep/results/
