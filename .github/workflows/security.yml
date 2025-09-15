@@ -4,30 +4,22 @@ on:
   push:
     branches: [ "master" ]        # <-- master
   pull_request:
-    branches: [ "master" ]        # <-- master
-  workflow_dispatch:              
 
 jobs:
-  build:
+  build-and-syft:
+    name: BUULD & SBOM
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+      - uses: actions/checkout@v3
 
       - name: Build the Docker image
-        run: docker build . -f Dockerfile -t juice-shop:${{ github.sha }}
+        run: docker build -t juice-shop:${{ github.sha }}
 
-      # --- Syft kurulumu ---
-      - name: Install Syft
-        uses: anchore/syft-action@v0
-
-      # --- SBOM üret (CycloneDX JSON formatında) ---
-      - name: Generate SBOM with Syft
-        run: syft docker:juice-shop:${{ github.sha }} -o cyclonedx-json > sbom.cdx.json
-
-      # --- SBOM’u artifact olarak yükle ---
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+      - name: Syft SBOM Scan
+        uses: anchore/sbom-action@v8
         with:
-          name: sbom
-          path: sbom.cdx.json
+          image: "juice-shop:${{ github.sha}}"
+          output-file: "sbom.spdx.json"
+          format: "spdx-json"
