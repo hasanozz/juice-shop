@@ -154,19 +154,4 @@ jobs:
         with:
           name: zap-xml-report
 
-      - name: Import Semgrep SARIF to DefectDojo
-        env:
-          DEFECTDOJO_API_TOKEN: ${{ secrets.DEFECTDOJO_API_TOKEN }}
-        run: |
-         pip install requests
-         python dojoscript.py semgrep.sarif
 
-      - name: Import GitLeaks SARIF to DefectDojo
-        env:
-          DEFECTDOJO_API_TOKEN: ${{ secrets.DEFECTDOJO_API_TOKEN }}
-        run: python dojoscript.py results.sarif
-
-      - name: Import GitLeaks SARIF to DefectDojo
-        env:
-          DEFECTDOJO_API_TOKEN: ${{ secrets.DEFECTDOJO_API_TOKEN }}
-        run: python dojoscript.py zap-report.xml
